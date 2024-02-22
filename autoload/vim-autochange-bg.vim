@@ -2,10 +2,10 @@
 
 "----- [TESTING] Change background automatically
 
-if exists('g:AutoChangeBgLoaded') || &cp
+if exists('g:AutoChangeBg_autoload_Loaded') || &cp
   finish
 endif
-let g:AutoChangeBgLoaded = 1
+let g:AutoChangeBg_autoload_Loaded = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -105,7 +105,7 @@ function! GetSunriseSunsetTimes()
 endfunction
 
 " Function to set Vim background color based on OS and desktop environment
-function! SetVimBackground()
+function! vim-autochange-bg#SetVimBackground()
   if has('unix')
     " For macOS
     if has('macunix')
@@ -164,16 +164,16 @@ function! SetVimBackground()
 endif
 endfunction
 
-" Set background color when Vim starts
-call SetVimBackground()
-
-" Periodic background color updates
-function! UpdateBackground(timer)
-  call SetVimBackground()
-endfunction
-
-" Set timer to update background every 5 minutes (300000 milliseconds)
-let s:background_timer = timer_start(60000, 'UpdateBackground', {'repeat': -1})
+" " Set background color when Vim starts
+" call SetVimBackground()
+"
+" " Periodic background color updates
+" function! UpdateBackground(timer)
+"   call SetVimBackground()
+" endfunction
+"
+" " Set timer to update background every 5 minutes (300000 milliseconds)
+" let s:background_timer = timer_start(60000, 'UpdateBackground', {'repeat': -1})
 
 let &cpo = s:save_cpo
 
