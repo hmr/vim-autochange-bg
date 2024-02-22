@@ -11,7 +11,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " Function to check internet accesibility
-function! CheckInternetConnection()
+function! s:CheckInternetConnection()
   let l:target = 'https://www.google.com'
 
   if executable('curl')
@@ -36,7 +36,7 @@ function! CheckInternetConnection()
 endfunction
 
 " Function to check if the current time is within the specified time range
-function! IsTimeInRange(start_time, end_time)
+function! s:IsTimeInRange(start_time, end_time)
     let l:current_time = strftime('%H%M%S')
 
     if a:start_time <= current_time && current_time <= a:end_time
@@ -47,7 +47,7 @@ function! IsTimeInRange(start_time, end_time)
 endfunction
 
 " Function to convert from string 'H:M:S P' to 'HHMMSS'
-function! ConvertTime12To24(time12)
+function! s:ConvertTime12To24(time12)
     let l:pattern = '\v^(\d+):(\d+):(\d+)\s*(AM|PM)$'
     let l:parts = matchlist(a:time12, l:pattern)
     if len(l:parts) == 0
@@ -75,7 +75,7 @@ function! ConvertTime12To24(time12)
     return l:hour . l:minute . l:second
 endfunction
 
-function! GetTimeZone()
+function! s:GetTimeZone()
   if executable('timedatectl')
     let l:timezone = trim(system("timedatectl | grep 'Time zone' | sed -re 's/^ \+//g' | cut -d ' ' -f 3"))
   elseif executable('curl')
@@ -90,8 +90,8 @@ function! GetLatLngByIp()
 endfunction
 
 " Function to get sunrise and sunset time from internet
-function! GetSunriseSunsetTimes()
-    let l:timezone = GetTimeZone()
+function! s:GetSunriseSunsetTimes()
+    let l:timezone = s:GetTimeZone()
     let l:latlng = GetLatLngByIp()
     echom 'timezone=' . l:timezone
     echom 'latlng=' . l:latlng
@@ -105,7 +105,7 @@ function! GetSunriseSunsetTimes()
 endfunction
 
 " Function to set Vim background color based on OS and desktop environment
-function! vim-autochange-bg#SetVimBackground()
+function! autochange_bg#SetVimBackground()
   if has('unix')
     " For macOS
     if has('macunix')
@@ -137,15 +137,15 @@ function! vim-autochange-bg#SetVimBackground()
     " Other unix
     else
       if !exists('s:daylight')
-        let s:daylight = GetSunriseSunsetTimes()
+        let s:daylight = s:GetSunriseSunsetTimes()
         " echo "sunrise=".s:daylight[0]
         " echo "sunset=".s:daylight[1]
-        let s:daylight[0] = ConvertTime12To24(s:daylight[0])
-        let s:daylight[1] = ConvertTime12To24(s:daylight[1])
+        let s:daylight[0] = s:ConvertTime12To24(s:daylight[0])
+        let s:daylight[1] = s:ConvertTime12To24(s:daylight[1])
         " echo "sunrise=".s:daylight[0]
         " echo "sunset=".s:daylight[1]
       endif
-      if IsTimeInRange(s:daylight[0], s:daylight[1])
+      if s:IsTimeInRange(s:daylight[0], s:daylight[1])
         set background=light
       else
         set background=dark
