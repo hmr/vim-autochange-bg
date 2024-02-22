@@ -17,7 +17,6 @@ function! CheckInternetConnection()
   if executable('curl')
     " Trying to access to Google
     let output = system('curl -s -I ' . l:target . ' | head -n 1')
-    echo output
     if match(output, 'HTTP\/[12]\s\+2\d\d') >= 0
       " Success if the code was 2xx
       return v:true
@@ -94,14 +93,14 @@ endfunction
 function! GetSunriseSunsetTimes()
     let l:timezone = GetTimeZone()
     let l:latlng = GetLatLngByIp()
-    " echo 'timezone=' . l:timezone
-    " echo 'latlng=' . l:latlng
+    echom 'timezone=' . l:timezone
+    echom 'latlng=' . l:latlng
     let l:sunrise_api = 'curl -s ' . shellescape('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
-    " echo 'sunrise_api='.l:sunrise_api
+    " echom 'sunrise_api='.l:sunrise_api
     let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
     let l:sunrise_sunset = split(l:api_result, ',')
-    " echo 'sunrise='.l:sunrise_sunset[0]
-    " echo 'sunset ='.l:sunrise_sunset[1]
+    echom 'sunrise='.l:sunrise_sunset[0]
+    echom 'sunset ='.l:sunrise_sunset[1]
     return l:sunrise_sunset
 endfunction
 
