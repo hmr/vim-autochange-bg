@@ -1,14 +1,10 @@
 " vim: ft=vim ts=2 sts=2 sw=2 expandtab fenc=utf-8 ff=unix
 
-"----- [TESTING] Change background automatically
+" vim-autochange-bg
+" A Vim plugin that automatically changes background color according to system settings or
+" local time retrieved from the Internet based on IP address.
 
-if exists('g:AutoChangeBg_autoload_Loaded') || &cp
-  finish
-endif
-let g:AutoChangeBg_autoload_Loaded = 1
-
-let s:save_cpo = &cpo
-set cpo&vim
+" Copyright (c) 2024 hmr
 
 " Function to check internet accesibility
 function! s:CheckInternetConnection()
@@ -93,22 +89,54 @@ endfunction
 function! s:GetSunriseSunsetTimes()
     let l:timezone = s:GetTimeZone()
     let l:latlng = GetLatLngByIp()
-    echom 'timezone=' . l:timezone
-    echom 'latlng=' . l:latlng
+    " echom 'timezone=' . l:timezone
+    " echom 'latlng=' . l:latlng
     let l:sunrise_api = 'curl -s ' . shellescape('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
     " echom 'sunrise_api='.l:sunrise_api
     let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
     let l:sunrise_sunset = split(l:api_result, ',')
-    echom 'sunrise='.l:sunrise_sunset[0]
-    echom 'sunset ='.l:sunrise_sunset[1]
+    " echom 'sunrise='.l:sunrise_sunset[0]
+    " echom 'sunset ='.l:sunrise_sunset[1]
     return l:sunrise_sunset
 endfunction
 
+" Function to determine background color light or dark
+function! s:DetermineBgColorByIp()
+  try
+    " Only gets daylight hours once every 24 hours
+    if !exists('g:autochg_bg_daylights')
+      \ || (strftime('%s') - g:autochg_bg_geoip_check_time >= g:autochg_bg_geoip_check_interval)
+      let g:autochg_bg_daylights = s:GetSunriseSunsetTimes()
+      " echom "sunrise=".g:autochg_bg_daylights[0]
+      " echom "sunset=".g:autochg_bg_daylights[1]
+      let g:autochg_bg_daylights[0] = s:ConvertTime12To24(g:autochg_bg_daylights[0])
+      let g:autochg_bg_daylights[1] = s:ConvertTime12To24(g:autochg_bg_daylights[1])
+      " echom "sunrise=".g:autochg_bg_daylights[0]
+      " echom "sunset=".g:autochg_bg_daylights[1]
+      let g:autochg_bg_geoip_check_time = strftime('%s')
+    endif
+    if s:IsTimeInRange(g:autochg_bg_daylights[0], g:autochg_bg_daylights[1])
+      set background=light
+    else
+      set background=dark
+    endif
+  catch
+    " Do nothing when error occurs
+  endtry
+endfunction
+
+" Periodic background color updates
+function! s:UpdateBackground(timer)
+  call autochg_bg#SetVimBackground()
+endfunction
+
 " Function to set Vim background color based on OS and desktop environment
-function! autochange_bg#SetVimBackground()
-  if has('unix')
+function! autochg_bg#SetVimBackground()
+  if !g:autochg_bg_force_geoip && has('unix')
+    \ || (g:autochg_bg_force_macos || g:autochg_bg_force_kde || g:autochg_bg_force_kde)
+
     " For macOS
-    if has('macunix')
+    if has('macunix') || g:autochg_bg_force_macos
       let l:theme = system("defaults read -g AppleInterfaceStyle 2>/dev/null")
       if l:theme =~? 'dark'
         set background=dark
@@ -116,8 +144,8 @@ function! autochange_bg#SetVimBackground()
         set background=light
       endif
 
-    " For Gnome (Linux)
-    elseif system('echo $XDG_CURRENT_DESKTOP') =~? 'gnome'
+    " For Gnome
+    elseif system('echo $XDG_CURRENT_DESKTOP') =~? 'gnome' || g:autochg_bg_force_gnome
       let l:theme = system("gsettings get org.gnome.desktop.interface gtk-theme")
       if l:theme =~? 'dark'
         set background=dark
@@ -125,8 +153,8 @@ function! autochange_bg#SetVimBackground()
         set background=light
       endif
 
-    " For KDE (Linux)
-    elseif system('echo $XDG_CURRENT_DESKTOP') =~? 'kde'
+    " For KDE
+    elseif system('echo $XDG_CURRENT_DESKTOP') =~? 'kde' || g:autochg_bg_force_kde
       let l:theme = system("kreadconfig5 --file kdeglobals --group General --key ColorScheme")
       if l:theme =~? 'dark'
         set background=dark
@@ -136,44 +164,66 @@ function! autochange_bg#SetVimBackground()
 
     " Other unix
     else
-      if !exists('s:daylight')
-        let s:daylight = s:GetSunriseSunsetTimes()
-        " echo "sunrise=".s:daylight[0]
-        " echo "sunset=".s:daylight[1]
-        let s:daylight[0] = s:ConvertTime12To24(s:daylight[0])
-        let s:daylight[1] = s:ConvertTime12To24(s:daylight[1])
-        " echo "sunrise=".s:daylight[0]
-        " echo "sunset=".s:daylight[1]
-      endif
-      if s:IsTimeInRange(s:daylight[0], s:daylight[1])
-        set background=light
-      else
-        set background=dark
-      endif
-
+      s:DetermineBgColorByIp()
     endif
 
   " For Windows (not tested yet...)
-  elseif has('win32') || has('win64')
+  elseif !g:autochg_bg_force_geoip && (has('win32') || has('win64'))
     let l:theme = system('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme')
     if l:theme =~ '0x0'
       set background=dark
     else
       set background=light
     endif
-endif
+
+  " Other system or force GeoIP
+  else
+    s:DetermineBgColorByIp()
+  endif
 endfunction
 
-" " Set background color when Vim starts
-" call SetVimBackground()
-"
-" " Periodic background color updates
-" function! UpdateBackground(timer)
-"   call SetVimBackground()
-" endfunction
-"
-" " Set timer to update background every 5 minutes (300000 milliseconds)
-" let s:background_timer = timer_start(60000, 'UpdateBackground', {'repeat': -1})
+" Disable plugin
+function autochg_bg#disable()
+  if g:autochg_bg_timer_id
+    call timer_stop(g:autochg_bg_timer_id)
+  endif
+  let g:autochg_bg_timer_id = 0
+endfunction
 
-let &cpo = s:save_cpo
+" Enable plugin
+function autochg_bg#enable()
+  if !g:autochg_bg_timer_id
+    " Set background color when Vim starts
+    call autochg_bg#SetVimBackground()
 
+    " Set timer to update background every 1 minutes (600000 milliseconds)
+    let g:autochg_bg_timer_id = timer_start(g:autochg_bg_check_interval, 's:UpdateBackground', {'repeat': -1})
+  endif
+endfunction
+
+" Toggle behavier
+function autochg_bg#toggle()
+  if g:autochg_bg_timer_id
+    call autochg_bg#disable
+  else
+    call autochg_bg#enable
+  endif
+endfunction
+
+" Show timer ID
+function autochg_bg#show_timer_id()
+  if g:autochg_bg_timer_id
+    echo g:autochg_bg_timer_id
+  else
+    echo 'no timer set'
+  endif
+endfunction
+
+" Show timer detail
+function autochg_bg#show_timer_info()
+  if g:autochg_bg_timer_id
+    echo timer_info(g:autochg_bg_timer_id)
+  else
+    echo 'no timer set'
+  endif
+endfunction
