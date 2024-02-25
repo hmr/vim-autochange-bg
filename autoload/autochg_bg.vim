@@ -132,7 +132,7 @@ endfunction
 
 " Function to set Vim background color based on OS and desktop environment
 function! autochg_bg#SetVimBackground()
-  if !g:autochg_bg_force_geoip && has('unix')
+  if (!g:autochg_bg_force_geoip && !g:autochg_bg_force_windows) && has('unix')
     \ || (g:autochg_bg_force_macos || g:autochg_bg_force_kde || g:autochg_bg_force_kde)
 
     " For macOS
@@ -164,11 +164,11 @@ function! autochg_bg#SetVimBackground()
 
     " Other unix
     else
-      s:DetermineBgColorByIp()
+      call s:DetermineBgColorByIp()
     endif
 
   " For Windows (not tested yet...)
-  elseif !g:autochg_bg_force_geoip && (has('win32') || has('win64'))
+  elseif (!g:autochg_bg_force_geoip && !g:autochg_bg_force_windows) && (has('win32') || has('win64'))
     let l:theme = system('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme')
     if l:theme =~ '0x0'
       set background=dark
@@ -178,7 +178,7 @@ function! autochg_bg#SetVimBackground()
 
   " Other system or force GeoIP
   else
-    s:DetermineBgColorByIp()
+    call s:DetermineBgColorByIp()
   endif
 endfunction
 
@@ -227,3 +227,22 @@ function autochg_bg#show_timer_info()
     echo 'no timer set'
   endif
 endfunction
+
+" Show GeoIP acquisition time
+function autochg_bg#show_geoip_time()
+  if exists('g:autochg_bg_geoip_check_time')
+    echo 'GeoIP acquisition time: ' . g:autochg_bg_geoip_check_time
+  else
+    echo 'No GeoIP acquired.'
+  endif
+endfunction
+
+" Show sunrise and sunset time
+function autochg_bg#show_sunrise_sunset_time()
+  if exists('g:autochg_bg_daylights')
+    echo 'Sunrise: ' . g:autochg_bg_daylights[0] . '/ Sunset: ' . g:autochg_bg_daylights[1]
+  else
+    echo 'No daylight time information provided.'
+  endif
+endfunction
+
