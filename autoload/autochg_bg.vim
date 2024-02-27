@@ -1,4 +1,4 @@
-" vim: ft=vim ts=2 sts=2 sw=2 expandtab fenc=utf-8 ff=unix
+" vim: ft=vim ts=2 sts=2 sw=2 expandtab fenc=utf-8 ff=unix fdm=indent
 
 " vim-autochange-bg
 " A Vim plugin that automatically changes background color according to system settings or
@@ -72,8 +72,11 @@ function! s:ConvertTime12To24(time12)
 endfunction
 
 function! s:GetTimeZone()
+  let l:zoneinfo_file = expand('/etc/localtime')
   if executable('timedatectl')
     let l:timezone = trim(system("timedatectl | grep 'Time zone' | sed -re 's/^ \+//g' | cut -d ' ' -f 3"))
+  elseif if filereadable(l:zoneinfo_file) && getftype(l:zoneinfo_file) ==# 'link'
+    let l:timezone = join(split(system('readlink /etc/localtime'), '/')[-2:], "/")
   elseif executable('curl')
     let l:timezone = trim(system("curl -s 'https://ipinfo.io/json' | jq -r '.timezone'"))
   endif
@@ -196,7 +199,7 @@ function autochg_bg#enable()
     " Set background color when Vim starts
     call autochg_bg#SetVimBackground()
 
-    " Set timer to update background every 1 minutes (600000 milliseconds)
+    " Set timer to update background every 1 minutes (60000 milliseconds)
     let g:autochg_bg_timer_id = timer_start(g:autochg_bg_check_interval, 's:UpdateBackground', {'repeat': -1})
   endif
 endfunction
@@ -215,7 +218,7 @@ function autochg_bg#show_timer_id()
   if g:autochg_bg_timer_id
     echo g:autochg_bg_timer_id
   else
-    echo 'no timer set'
+    echo 'No timer is set.'
   endif
 endfunction
 
@@ -224,25 +227,33 @@ function autochg_bg#show_timer_info()
   if g:autochg_bg_timer_id
     echo timer_info(g:autochg_bg_timer_id)
   else
-    echo 'no timer set'
+    echo 'No timer is set.'
   endif
 endfunction
 
 " Show GeoIP acquisition time
 function autochg_bg#show_geoip_time()
   if exists('g:autochg_bg_geoip_check_time')
-    echo 'GeoIP acquisition time: ' . g:autochg_bg_geoip_check_time
+    echo 'GeoIP acquisition time: ' . strftime('%Y-%m-%d %H:%M:%S', g:autochg_bg_geoip_check_time)
   else
-    echo 'No GeoIP acquired.'
+    echo 'No GeoIP is acquired.'
   endif
 endfunction
 
 " Show sunrise and sunset time
 function autochg_bg#show_sunrise_sunset_time()
   if exists('g:autochg_bg_daylights')
-    echo 'Sunrise: ' . g:autochg_bg_daylights[0] . '/ Sunset: ' . g:autochg_bg_daylights[1]
+    let sunrise_hour = strpart(g:autochg_bg_daylights[0], 0 ,2)
+    let sunrise_min  = strpart(g:autochg_bg_daylights[0], 2 ,2)
+    let sunrise_sec  = strpart(g:autochg_bg_daylights[0], 4 ,2)
+    let sunset_hour  = strpart(g:autochg_bg_daylights[1], 0 ,2)
+    let sunset_min   = strpart(g:autochg_bg_daylights[1], 2 ,2)
+    let sunset_sec   = strpart(g:autochg_bg_daylights[1], 4 ,2)
+    let sunrise      = sunrise_hour . ':' . sunrise_min . ':' . sunrise_sec
+    let sunset       = sunset_hour  . ':' . sunset_sec  . ':' . sunset_sec
+    echo 'Sunrise: ' . sunrise . '/ Sunset: ' . sunset
   else
-    echo 'No daylight time information provided.'
+    echo 'No daylight time is provided.'
   endif
 endfunction
 
