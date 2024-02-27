@@ -88,15 +88,15 @@ endfunction
 " Function to get sunrise and sunset time from internet
 function! s:GetSunriseSunsetTimes()
     let l:timezone = s:GetTimeZone()
-    let l:latlng = GetLatLngByIp()
     " echom 'timezone=' . l:timezone
+    let l:latlng = GetLatLngByIp()
     " echom 'latlng=' . l:latlng
     let l:sunrise_api = 'curl -s ' . shellescape('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
-    " echom 'sunrise_api='.l:sunrise_api
+    " echom 'sunrise_api=' . l:sunrise_api
     let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
     let l:sunrise_sunset = split(l:api_result, ',')
-    " echom 'sunrise='.l:sunrise_sunset[0]
-    " echom 'sunset ='.l:sunrise_sunset[1]
+    " echom 'sunrise=' . l:sunrise_sunset[0]
+    " echom 'sunset =' . l:sunrise_sunset[1]
     return l:sunrise_sunset
 endfunction
 
