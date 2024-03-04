@@ -74,13 +74,16 @@ endfunction
 function! s:GetTimeZone()
   let l:zoneinfo_file = expand('/etc/localtime')
   if executable('timedatectl')
+    " echom 'Getting timezone by timedatectl'
     let l:timezone = trim(system("timedatectl | grep 'Time zone' | sed -re 's/^ \+//g' | cut -d ' ' -f 3"))
-  elseif if filereadable(l:zoneinfo_file) && getftype(l:zoneinfo_file) ==# 'link'
+  elseif filereadable(l:zoneinfo_file) && getftype(l:zoneinfo_file) ==# 'link'
+    " echom 'Getting timezone by ' . l:zoneinfo_file
     let l:timezone = join(split(system('readlink /etc/localtime'), '/')[-2:], "/")
   elseif executable('curl')
+    " echom 'Getting timezone by ipinfo.io'
     let l:timezone = trim(system("curl -s 'https://ipinfo.io/json' | jq -r '.timezone'"))
   endif
-  return l:timezone
+  return substitute(l:timezone, '\%x00', '', 'g')
 endfunction
 
 function! GetLatLngByIp()
@@ -92,8 +95,14 @@ endfunction
 function! s:GetSunriseSunsetTimes()
     let l:timezone = s:GetTimeZone()
     " echom 'timezone=' . l:timezone
-    let l:latlng = GetLatLngByIp()
-    " echom 'latlng=' . l:latlng
+    if g:autochg_bg_latitude ==# -1 && g:autochg_bg_longitude ==# -1
+      let l:latlng = GetLatLngByIp()
+    else
+      l:latlng[0] = g:autochg_bg_latitude
+      l:latlng[1] = g:autochg_bg_longitude
+    endif
+    " echom 'latlng=' . l:latlng[0] . ',' . l:latlng[1]
+
     let l:sunrise_api = 'curl -s ' . shellescape('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
     " echom 'sunrise_api=' . l:sunrise_api
     let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
@@ -124,7 +133,8 @@ function! s:DetermineBgColorByIp()
       set background=dark
     endif
   catch
-    " Do nothing when error occurs
+    " Do nothing
+    " echom "Error: ' . v:exception . ' in ' . function('')
   endtry
 endfunction
 

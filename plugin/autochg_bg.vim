@@ -51,19 +51,31 @@ function s:InitVariable(var, value)
   endif
 endfunction
 
-call s:InitVariable('g:autochg_bg_timer_id', 0)
+" Interval to check if the system should be set to dark or light mode.
+" Default 60000ms (=60sec)
 call s:InitVariable('g:autochg_bg_check_interval', 60000)
-call s:InitVariable('g:autochg_bg_geoip_check_time', 0)
+" Interval to update sunrise and sunset time.
+" Default 86400 sec (=24 hours)
 call s:InitVariable('g:autochg_bg_geoip_check_interval', 86400)
-
+" Enable this plugin on Vim startup
+" Default 0 (=Disabled)
 call s:InitVariable('g:autochg_bg_enable_on_vim_startup', 0)
 
+" Force to use GeoIP service
 call s:InitVariable('g:autochg_bg_force_geoip', 0)
+
 call s:InitVariable('g:autochg_bg_force_macos', 0)
 call s:InitVariable('g:autochg_bg_force_gnome', 0)
 call s:InitVariable('g:autochg_bg_force_kde', 0)
 call s:InitVariable('g:autochg_bg_force_windows', 0)
 
+" Manually set latitude and longitude
+call s:InitVariable('g:autochg_bg_latitude', -1)
+call s:InitVariable('g:autochg_bg_longitude', -1)
+
+" No need to touch
+call s:InitVariable('g:autochg_bg_timer_id', 0)
+call s:InitVariable('g:autochg_bg_geoip_check_time', 0)
 
 " -----------------------------------------------------------------------------
 " ----- Auto command
