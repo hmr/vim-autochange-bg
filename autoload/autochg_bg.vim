@@ -98,8 +98,7 @@ function! s:GetSunriseSunsetTimes()
     if g:autochg_bg_latitude ==# -1 && g:autochg_bg_longitude ==# -1
       let l:latlng = GetLatLngByIp()
     else
-      l:latlng[0] = g:autochg_bg_latitude
-      l:latlng[1] = g:autochg_bg_longitude
+      let l:latlng = [g:autochg_bg_latitude, g:autochg_bg_longitude ]
     endif
     " echom 'latlng=' . l:latlng[0] . ',' . l:latlng[1]
 
@@ -107,8 +106,8 @@ function! s:GetSunriseSunsetTimes()
     " echom 'sunrise_api=' . l:sunrise_api
     let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
     let l:sunrise_sunset = split(l:api_result, ',')
-    " echom 'sunrise=' . l:sunrise_sunset[0]
-    " echom 'sunset =' . l:sunrise_sunset[1]
+    " echom 'sunrise(12h)=' . l:sunrise_sunset[0]
+    " echom 'sunset (12h)=' . l:sunrise_sunset[1]
     return l:sunrise_sunset
 endfunction
 
@@ -119,12 +118,10 @@ function! s:DetermineBgColorByIp()
     if !exists('g:autochg_bg_daylights')
       \ || (strftime('%s') - g:autochg_bg_geoip_check_time >= g:autochg_bg_geoip_check_interval)
       let g:autochg_bg_daylights = s:GetSunriseSunsetTimes()
-      " echom "sunrise=".g:autochg_bg_daylights[0]
-      " echom "sunset=".g:autochg_bg_daylights[1]
       let g:autochg_bg_daylights[0] = s:ConvertTime12To24(g:autochg_bg_daylights[0])
       let g:autochg_bg_daylights[1] = s:ConvertTime12To24(g:autochg_bg_daylights[1])
-      " echom "sunrise=".g:autochg_bg_daylights[0]
-      " echom "sunset=".g:autochg_bg_daylights[1]
+      " echom "sunrise(24h)=".g:autochg_bg_daylights[0]
+      " echom "sunset (24h)=".g:autochg_bg_daylights[1]
       let g:autochg_bg_geoip_check_time = strftime('%s')
     endif
     if s:IsTimeInRange(g:autochg_bg_daylights[0], g:autochg_bg_daylights[1])
@@ -134,7 +131,7 @@ function! s:DetermineBgColorByIp()
     endif
   catch
     " Do nothing
-    " echom "Error: ' . v:exception . ' in ' . function('')
+    " echom 'Error: ' . v:exception
   endtry
 endfunction
 
