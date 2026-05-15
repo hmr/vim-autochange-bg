@@ -12,7 +12,7 @@ function! s:CheckInternetConnection()
 
   if executable('curl')
     " Trying to access to Google
-    let output = system('curl -s -I ' . l:target . ' | head -n 1')
+    let output = system('curl -Ls -I ' . l:target . ' | head -n 1')
     if match(output, 'HTTP\/[12]\s\+2\d\d') >= 0
       " Success if the code was 2xx
       return v:true
@@ -81,13 +81,15 @@ function! s:GetTimeZone()
     let l:timezone = join(split(system('readlink /etc/localtime'), '/')[-2:], "/")
   elseif executable('curl')
     " echom 'Getting timezone by ipinfo.io'
-    let l:timezone = trim(system("curl -s 'https://ipinfo.io/json' | jq -r '.timezone'"))
+    let l:timezone = trim(system("curl -Ls 'https://ipinfo.io/json' | jq -r '.timezone'"))
+  # TODO: Add wget way
   endif
   return substitute(l:timezone, '\%x00', '', 'g')
 endfunction
 
 function! GetLatLngByIp()
-  let l:latlng = split(trim(system("curl -s 'https://ipinfo.io/json' | jq -r '.loc'")), ',')
+  # TODO: Add wget way
+  let l:latlng = split(trim(system("curl -Ls 'https://ipinfo.io/json' | jq -r '.loc'")), ',')
   return l:latlng
 endfunction
 
@@ -102,7 +104,8 @@ function! s:GetSunriseSunsetTimes()
     endif
     " echom 'latlng=' . l:latlng[0] . ',' . l:latlng[1]
 
-    let l:sunrise_api = 'curl -s ' . shellescape('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
+    # TODO: Add wget way
+    let l:sunrise_api = 'curl -Ls ' . shellescape('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
     " echom 'sunrise_api=' . l:sunrise_api
     let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
     let l:sunrise_sunset = split(l:api_result, ',')
