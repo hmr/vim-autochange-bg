@@ -80,6 +80,12 @@ function! s:HttpGetCommand(url)
   return ''
 endfunction
 
+function! s:DoSetBackGround(background)
+  if &background !=# a:background
+    execute 'set background=' . a:background
+  endif
+endfunction
+
 function! s:GetTimeZone()
   let l:zoneinfo_file = expand('/etc/localtime')
   let l:timezone = ''
@@ -157,9 +163,9 @@ function! s:DetermineBgColorByIp()
       let g:autochg_bg_geoip_check_time = strftime('%s')
     endif
     if s:IsTimeInRange(g:autochg_bg_daylights[0], g:autochg_bg_daylights[1])
-      set background=light
+      call s:DoSetBackGround('light')
     else
-      set background=dark
+      call s:DoSetBackGround('dark')
     endif
   catch
     " Do nothing
@@ -181,27 +187,27 @@ function! autochg_bg#SetVimBackground()
     if has('macunix') || g:autochg_bg_force_macos
       let l:theme = system("defaults read -g AppleInterfaceStyle 2>/dev/null")
       if l:theme =~? 'dark'
-        set background=dark
+        call s:DoSetBackGround('dark')
       else
-        set background=light
+        call s:DoSetBackGround('light')
       endif
 
     " For Gnome
     elseif system('echo $XDG_CURRENT_DESKTOP') =~? 'gnome' || g:autochg_bg_force_gnome
       let l:theme = system("gsettings get org.gnome.desktop.interface gtk-theme")
       if l:theme =~? 'dark'
-        set background=dark
+        call s:DoSetBackGround('dark')
       else
-        set background=light
+        call s:DoSetBackGround('light')
       endif
 
     " For KDE
     elseif system('echo $XDG_CURRENT_DESKTOP') =~? 'kde' || g:autochg_bg_force_kde
       let l:theme = system("kreadconfig5 --file kdeglobals --group General --key ColorScheme")
       if l:theme =~? 'dark'
-        set background=dark
+        call s:DoSetBackGround('dark')
       else
-        set background=light
+        call s:DoSetBackGround('light')
       endif
 
     " Other unix
@@ -213,9 +219,9 @@ function! autochg_bg#SetVimBackground()
   elseif !g:autochg_bg_force_geoip && (has('win32') || has('win64') || g:autochg_bg_force_windows)
     let l:theme = system('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme')
     if l:theme =~ '0x0'
-      set background=dark
+      call s:DoSetBackGround('dark')
     else
-      set background=light
+      call s:DoSetBackGround('light')
     endif
 
   " Other system or force GeoIP
