@@ -234,10 +234,10 @@ endfunction
 
 " Enable plugin
 function autochg_bg#enable()
-  if !g:autochg_bg_timer_id
-    " Set background color when Vim starts
-    call autochg_bg#SetVimBackground()
+  " Refresh background even when the timer is already running.
+  call autochg_bg#SetVimBackground()
 
+  if !g:autochg_bg_timer_id
     " Set timer to update background every 1 minutes (60000 milliseconds)
     let g:autochg_bg_timer_id = timer_start(g:autochg_bg_check_interval, 's:UpdateBackground', {'repeat': -1})
   endif
