@@ -71,30 +71,54 @@ function! s:ConvertTime12To24(time12)
     return l:hour . l:minute . l:second
 endfunction
 
+function! s:HttpGetCommand(url)
+  if executable('curl')
+    return 'curl -Ls ' . shellescape(a:url)
+  elseif executable('wget')
+    return 'wget -qO- ' . shellescape(a:url)
+  endif
+  return ''
+endfunction
+
 function! s:GetTimeZone()
   let l:zoneinfo_file = expand('/etc/localtime')
+  let l:timezone = ''
   if executable('timedatectl')
     " echom 'Getting timezone by timedatectl'
     let l:timezone = trim(system("timedatectl | grep 'Time zone' | sed -re 's/^ \+//g' | cut -d ' ' -f 3"))
   elseif filereadable(l:zoneinfo_file) && getftype(l:zoneinfo_file) ==# 'link'
     " echom 'Getting timezone by ' . l:zoneinfo_file
     let l:timezone = join(split(system('readlink /etc/localtime'), '/')[-2:], "/")
-  elseif executable('curl')
+  elseif executable('jq')
     " echom 'Getting timezone by ipinfo.io'
-    let l:timezone = trim(system("curl -Ls 'https://ipinfo.io/json' | jq -r '.timezone'"))
-  "# TODO: Add wget way
+    let l:fetch_cmd = s:HttpGetCommand('https://ipinfo.io/json')
+    if !empty(l:fetch_cmd)
+      let l:timezone = trim(system(l:fetch_cmd . " | jq -r '.timezone'"))
+    endif
   endif
   return substitute(l:timezone, '\%x00', '', 'g')
 endfunction
 
 function! GetLatLngByIp()
-  "# TODO: Add wget way
-  let l:latlng = split(trim(system("curl -Ls 'https://ipinfo.io/json' | jq -r '.loc'")), ',')
+  if !executable('jq')
+    return []
+  endif
+
+  let l:fetch_cmd = s:HttpGetCommand('https://ipinfo.io/json')
+  if empty(l:fetch_cmd)
+    return []
+  endif
+
+  let l:latlng = split(trim(system(l:fetch_cmd . " | jq -r '.loc'")), ',')
   return l:latlng
 endfunction
 
 " Function to get sunrise and sunset time from internet
 function! s:GetSunriseSunsetTimes()
+    if !executable('jq')
+      return []
+    endif
+
     let l:timezone = s:GetTimeZone()
     " echom 'timezone=' . l:timezone
     if g:autochg_bg_latitude ==# -1 && g:autochg_bg_longitude ==# -1
@@ -102,10 +126,15 @@ function! s:GetSunriseSunsetTimes()
     else
       let l:latlng = [g:autochg_bg_latitude, g:autochg_bg_longitude ]
     endif
+    if len(l:latlng) < 2
+      return []
+    endif
     " echom 'latlng=' . l:latlng[0] . ',' . l:latlng[1]
 
-    "# TODO: Add wget way
-    let l:sunrise_api = 'curl -Ls ' . shellescape('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
+    let l:sunrise_api = s:HttpGetCommand('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
+    if empty(l:sunrise_api)
+      return []
+    endif
     " echom 'sunrise_api=' . l:sunrise_api
     let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
     let l:sunrise_sunset = split(l:api_result, ',')
