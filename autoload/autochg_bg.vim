@@ -145,8 +145,8 @@ endfunction
 
 " Function to set Vim background color based on OS and desktop environment
 function! autochg_bg#SetVimBackground()
-  if (!g:autochg_bg_force_geoip && !g:autochg_bg_force_windows) && has('unix')
-    \ || (g:autochg_bg_force_macos || g:autochg_bg_force_kde || g:autochg_bg_force_kde)
+  if !g:autochg_bg_force_geoip
+    \ && (has('unix') || g:autochg_bg_force_macos || g:autochg_bg_force_gnome || g:autochg_bg_force_kde)
 
     " For macOS
     if has('macunix') || g:autochg_bg_force_macos
@@ -181,7 +181,7 @@ function! autochg_bg#SetVimBackground()
     endif
 
   " For Windows (not tested yet...)
-  elseif (!g:autochg_bg_force_geoip && !g:autochg_bg_force_windows) && (has('win32') || has('win64'))
+  elseif !g:autochg_bg_force_geoip && (has('win32') || has('win64') || g:autochg_bg_force_windows)
     let l:theme = system('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme')
     if l:theme =~ '0x0'
       set background=dark
@@ -260,10 +260,9 @@ function autochg_bg#show_sunrise_sunset_time()
     let sunset_min   = strpart(g:autochg_bg_daylights[1], 2 ,2)
     let sunset_sec   = strpart(g:autochg_bg_daylights[1], 4 ,2)
     let sunrise      = sunrise_hour . ':' . sunrise_min . ':' . sunrise_sec
-    let sunset       = sunset_hour  . ':' . sunset_sec  . ':' . sunset_sec
+    let sunset       = sunset_hour  . ':' . sunset_min  . ':' . sunset_sec
     echo 'Sunrise: ' . sunrise . '/ Sunset: ' . sunset
   else
     echo 'No daylight time is provided.'
   endif
 endfunction
-
