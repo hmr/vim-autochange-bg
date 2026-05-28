@@ -82,13 +82,13 @@ function! s:GetTimeZone()
   elseif executable('curl')
     " echom 'Getting timezone by ipinfo.io'
     let l:timezone = trim(system("curl -Ls 'https://ipinfo.io/json' | jq -r '.timezone'"))
-  # TODO: Add wget way
+  "# TODO: Add wget way
   endif
   return substitute(l:timezone, '\%x00', '', 'g')
 endfunction
 
 function! GetLatLngByIp()
-  # TODO: Add wget way
+  "# TODO: Add wget way
   let l:latlng = split(trim(system("curl -Ls 'https://ipinfo.io/json' | jq -r '.loc'")), ',')
   return l:latlng
 endfunction
@@ -104,7 +104,7 @@ function! s:GetSunriseSunsetTimes()
     endif
     " echom 'latlng=' . l:latlng[0] . ',' . l:latlng[1]
 
-    # TODO: Add wget way
+    "# TODO: Add wget way
     let l:sunrise_api = 'curl -Ls ' . shellescape('https://api.sunrise-sunset.org/json?' . 'lat=' . l:latlng[0] . '&lng=' . l:latlng[1] . '&date=today&tzid=' . l:timezone)
     " echom 'sunrise_api=' . l:sunrise_api
     let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
