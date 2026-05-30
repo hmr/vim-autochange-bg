@@ -245,7 +245,7 @@ function autochg_bg#enable()
 
   if !g:autochg_bg_timer_id
     " Set timer to update background every 1 minutes (60000 milliseconds)
-    let g:autochg_bg_timer_id = timer_start(g:autochg_bg_check_interval, function(s:UpdateBackground), {'repeat': -1})
+    let g:autochg_bg_timer_id = timer_start(g:autochg_bg_check_interval, function('s:UpdateBackground'), {'repeat': -1})
   endif
 endfunction
 
