@@ -43,6 +43,8 @@ All settings are following:
 
 ## Notes
 
+1. GeoIP fallback requires `jq` and either `curl` or `wget`.
+
 1. This plugin will use following web services
 
    | Objective | URL |
@@ -50,4 +52,3 @@ All settings are following:
    | To obtain timezone               | http://ipinfo.io           |
    | To obtain latitude and longitude | http://ipinfo.io           |
    | To obtain daylight time          | https://sunrise-sunset.org |
-
