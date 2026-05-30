@@ -176,6 +176,7 @@ endfunction
 " Periodic background color updates
 function! s:UpdateBackground(timer)
   call autochg_bg#SetVimBackground()
+  redraw!
 endfunction
 
 " Function to set Vim background color based on OS and desktop environment
