@@ -6,13 +6,18 @@
 
 " Copyright (c) 2024 hmr
 
+function! s:CallSystem(cmd)
+  silent let l:output = system(a:cmd)
+  return l:output
+endfunction
+
 " Function to check internet accesibility
 function! s:CheckInternetConnection()
   let l:target = 'https://www.google.com'
 
   if executable('curl')
     " Trying to access to Google
-    let output = system('curl -Ls -I ' . l:target . ' | head -n 1')
+    let output = s:CallSystem('curl -Ls -I ' . l:target . ' | head -n 1')
     if match(output, 'HTTP\/[12]\s\+2\d\d') >= 0
       " Success if the code was 2xx
       return v:true
@@ -20,7 +25,7 @@ function! s:CheckInternetConnection()
       return v:false
     endif
   elseif executable('wget')
-    let output = system('wget --spider -q -S ' . l:target . ' 2>&1')
+    let output = s:CallSystem('wget --spider -q -S ' . l:target . ' 2>&1')
     if v:shell_error == 0
       return v:true
     else
@@ -91,15 +96,15 @@ function! s:GetTimeZone()
   let l:timezone = ''
   if executable('timedatectl')
     " echom 'Getting timezone by timedatectl'
-    let l:timezone = trim(system("timedatectl | grep 'Time zone' | sed -re 's/^ \+//g' | cut -d ' ' -f 3"))
+    let l:timezone = trim(s:CallSystem("timedatectl | grep 'Time zone' | sed -re 's/^ \+//g' | cut -d ' ' -f 3"))
   elseif filereadable(l:zoneinfo_file) && getftype(l:zoneinfo_file) ==# 'link'
     " echom 'Getting timezone by ' . l:zoneinfo_file
-    let l:timezone = join(split(system('readlink /etc/localtime'), '/')[-2:], "/")
+    let l:timezone = join(split(s:CallSystem('readlink /etc/localtime'), '/')[-2:], "/")
   elseif executable('jq')
     " echom 'Getting timezone by ipinfo.io'
     let l:fetch_cmd = s:HttpGetCommand('https://ipinfo.io/json')
     if !empty(l:fetch_cmd)
-      let l:timezone = trim(system(l:fetch_cmd . " | jq -r '.timezone'"))
+      let l:timezone = trim(s:CallSystem(l:fetch_cmd . " | jq -r '.timezone'"))
     endif
   endif
   return substitute(l:timezone, '\%x00', '', 'g')
@@ -115,7 +120,7 @@ function! GetLatLngByIp()
     return []
   endif
 
-  let l:latlng = split(trim(system(l:fetch_cmd . " | jq -r '.loc'")), ',')
+  let l:latlng = split(trim(s:CallSystem(l:fetch_cmd . " | jq -r '.loc'")), ',')
   return l:latlng
 endfunction
 
@@ -142,7 +147,7 @@ function! s:GetSunriseSunsetTimes()
       return []
     endif
     " echom 'sunrise_api=' . l:sunrise_api
-    let l:api_result= trim(system(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
+    let l:api_result= trim(s:CallSystem(l:sunrise_api . " | jq -r '\"\\(.results.sunrise),\\(.results.sunset)\"'"))
     let l:sunrise_sunset = split(l:api_result, ',')
     " echom 'sunrise(12h)=' . l:sunrise_sunset[0]
     " echom 'sunset (12h)=' . l:sunrise_sunset[1]
@@ -175,7 +180,6 @@ endfunction
 
 " Periodic background color updates
 function! s:UpdateBackground(timer)
-  " TODO: Mitigate garbage characters that appear when holding down keys while the timer fires
   call autochg_bg#SetVimBackground()
 endfunction
 
@@ -186,7 +190,7 @@ function! autochg_bg#SetVimBackground()
 
     " For macOS
     if has('macunix') || g:autochg_bg_force_macos
-      let l:theme = system("defaults read -g AppleInterfaceStyle 2>/dev/null")
+      let l:theme = s:CallSystem("defaults read -g AppleInterfaceStyle 2>/dev/null")
       if l:theme =~? 'dark'
         call s:DoSetBackground('dark')
       else
@@ -194,8 +198,8 @@ function! autochg_bg#SetVimBackground()
       endif
 
     " For Gnome
-    elseif system('echo $XDG_CURRENT_DESKTOP') =~? 'gnome' || g:autochg_bg_force_gnome
-      let l:theme = system("gsettings get org.gnome.desktop.interface gtk-theme")
+    elseif s:CallSystem('echo $XDG_CURRENT_DESKTOP') =~? 'gnome' || g:autochg_bg_force_gnome
+      let l:theme = s:CallSystem("gsettings get org.gnome.desktop.interface gtk-theme")
       if l:theme =~? 'dark'
         call s:DoSetBackground('dark')
       else
@@ -203,8 +207,8 @@ function! autochg_bg#SetVimBackground()
       endif
 
     " For KDE
-    elseif system('echo $XDG_CURRENT_DESKTOP') =~? 'kde' || g:autochg_bg_force_kde
-      let l:theme = system("kreadconfig5 --file kdeglobals --group General --key ColorScheme")
+    elseif s:CallSystem('echo $XDG_CURRENT_DESKTOP') =~? 'kde' || g:autochg_bg_force_kde
+      let l:theme = s:CallSystem("kreadconfig5 --file kdeglobals --group General --key ColorScheme")
       if l:theme =~? 'dark'
         call s:DoSetBackground('dark')
       else
@@ -218,7 +222,7 @@ function! autochg_bg#SetVimBackground()
 
   " For Windows (not tested yet...)
   elseif !g:autochg_bg_force_geoip && (has('win32') || has('win64') || g:autochg_bg_force_windows)
-    let l:theme = system('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme')
+    let l:theme = s:CallSystem('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme')
     if l:theme =~ '0x0'
       call s:DoSetBackground('dark')
     else
