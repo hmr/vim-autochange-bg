@@ -175,8 +175,8 @@ endfunction
 
 " Periodic background color updates
 function! s:UpdateBackground(timer)
+  " TODO: Mitigate garbage characters that appear when holding down keys while the timer fires
   call autochg_bg#SetVimBackground()
-  redraw!
 endfunction
 
 " Function to set Vim background color based on OS and desktop environment
