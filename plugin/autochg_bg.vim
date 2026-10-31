@@ -83,7 +83,7 @@ call s:InitVariable('g:autochg_bg_geoip_check_time', 0)
 augroup autochg_bg
   autocmd!
   if g:autochg_bg_enable_on_vim_startup
-    autocmd VimEnter * :AutochgBgEnable
+    autocmd VimEnter * ++nested :AutochgBgEnable
   endif
 augroup END
 
